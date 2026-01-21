@@ -1,4 +1,3 @@
-
 -- GET 10 Books by Cateory using Dense Rank
 WITH RankedBooks AS (
     SELECT b.BookID, b.Title, c.CategoryName, 
@@ -17,7 +16,6 @@ WHERE CategoryRank <= 10
 ORDER BY CategoryName, CategoryRank;
 
 -- GET Monthly borrow trends with previous month comparison
-
 WITH MonthlyBorrows AS (
     SELECT 
         YEAR(BorrowDate) as BorrowYear,
@@ -58,3 +56,64 @@ INNER JOIN Books b ON ba.BookID = b.BookID
 LEFT JOIN BorrowHistory bh ON b.BookID = bh.BookID
 GROUP BY a.AuthorID, a.FirstName, a.LastName
 ORDER BY PopularityRank;
+
+
+SELECT
+    b.BookID, 
+    b.Title,
+    b.ISBN,
+    p.PublisherName,
+    Authors.AuthorList,
+    Categories.CategoryList
+FROM Books b
+LEFT JOIN Publishers p ON b.PublisherID = p.PublisherID
+CROSS APPLY(
+    SELECT STRING_AGG(a.FirstName + ' ' + a.LastName, ', ') as AuthorList
+    FROM BookAuthors ba
+    INNER JOIN Authors a ON ba.AuthorID = a.AuthorID
+    WHERE ba.BookID = b.BookID
+) Authors
+CROSS APPLY (
+    SELECT STRING_AGG(c.CategoryName, ', ') as CategoryList
+    FROM BookCategories bc
+    INNER JOIN Categories c ON bc.CategoryID = c.CategoryID
+    WHERE bc.BookID = b.BookID
+) Categories
+WHERE b.Title LIKE '%search_terms%'
+  OR Authors.AuthorList LIKE '%search_term%';
+
+-- Recursive CTE for category tree
+WITH CategoryHierarchy AS (
+    -- Anchor: Root categories
+    SELECT
+        CategoryID,
+        CategoryName,
+        ParentCategoryID,
+        0 as Level, 
+        CAST(CategoryName AS NVARCHAR(500)) as Path
+    FROM Categories
+    WHERE ParentCategoryID IS NULL
+
+    UNION ALL
+
+    -- Recursive: Child categories
+    SELECT
+        c.CategoryID, 
+        c.CategoryName, 
+        c.ParentCategoryID,
+        ch.Level + 1,
+        CAST(ch.Path + ' > ' + c.CategoryName AS NVARCHAR(500))
+    FROM Categories c
+    INNER JOIN CategoryHierarchy ch ON c.ParentCategoryID = ch.CategoryID
+)
+
+SELECT
+    ch.CategoryID,
+    REPLICATE('  ', ch.Level) + ch.CategoryName as CategoryName,
+    ch.Level,
+    ch.Path,
+    COUNT(bc.BookID) as BookCount
+FROM CategoryHierarchy ch 
+LEFT JOIN BookCategories bc ON ch.CategoryID = bc.CategoryID
+GROUP BY ch.CategoryID, ch.CategoryName, ch.Level, ch.Path
+ORDER BY ch.Path;
