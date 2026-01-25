@@ -17,7 +17,6 @@ WHERE CategoryRank <= 10
 ORDER BY CategoryName, CategoryRank;
 
 -- GET Monthly borrow trends with previous month comparison
-
 WITH MonthlyBorrows AS (
     SELECT 
         YEAR(BorrowDate) as BorrowYear,

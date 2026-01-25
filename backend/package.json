@@ -1,0 +1,30 @@
+{
+  "name": "book-library-application",
+  "version": "1.0.0",
+  "description": "Book Management System",
+  "keywords": [
+    "book"
+  ],
+  "license": "ISC",
+  "author": "Alvin C. Logenstein",
+  "type": "commonjs",
+  "main": "src/main.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "node src/main.js",
+    "dev": "nodemon src/main.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mssql": "^12.2.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.11"
+  }
+}
