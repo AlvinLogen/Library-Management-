@@ -1,3 +1,11 @@
+/**
+ * Book Entity - Domain Model
+ * Represents a book in the library system
+ * 
+ * Design by Contract:
+ * - Invariants: availableCopies <= totalCopies, totalCopies > 0
+ * - Business rules encapsulated, no infrastructure dependencies
+ */
 class Book {
     #bookId;
     #isbn;
