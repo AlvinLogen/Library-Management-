@@ -100,7 +100,7 @@ class AuthorRepository extends IAuthorRepository {
         if(!author instanceof Author){
             throw new Error('Invalid author entity');
         }
-        
+
         try {
             // if authorId exists, Update; else INSERT
             if(author.authorId){

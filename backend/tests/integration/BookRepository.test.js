@@ -6,13 +6,11 @@ describe('BookRepository - Advanced T-SQL Integration', () => {
 
     beforeAll(async () => {
         repository = new BookRepository(dbConnection);
-        await setupTestData();
     });
 
     afterAll(async () => {
-        await cleanuptestData();
         await dbConnection.close();
-    })
+    });
 
     describe('getAnalytics() - Window Functions & CTEs', () => {
         test('should return borrow trends using LAG window function', async () => {
@@ -38,7 +36,7 @@ describe('BookRepository - Advanced T-SQL Integration', () => {
 
             // Verify Ranking order
             for(let i = 1; i < analytics.TopBooks.length; i++){
-                expect(analytics.TopBooks[i].TotalBorrows).toBeLessThankOrEqual(
+                expect(analytics.TopBooks[i].TotalBorrows).toBeLessThanOrEqual(
                     analytics.TopBooks[i -1].TotalBorrows
                 );
             }
@@ -64,7 +62,7 @@ describe('BookRepository - Advanced T-SQL Integration', () => {
             });
         });
 
-        test('should inclue book counts for each category', async () => {
+        test('should include book counts for each category', async () => {
             const hierarchy = await repository.getCategoryHierarchy();
 
             hierarchy.forEach(category => {
@@ -86,7 +84,7 @@ describe('BookRepository - Advanced T-SQL Integration', () => {
             });
 
             const endTime = Date.now();
-            const executionTime = endTime = startTime;
+            const executionTime = endTime - startTime;
 
             // Performance requirement: < 100ms
             expect(executionTime).toBeLessThan(100);
