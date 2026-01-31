@@ -9,7 +9,7 @@ class IBookRepository {
      * @precondition: bookId must be a positive integer
      * @postcondition: Returns Book entity or null if not found
      */
-    async findbyId(bookId){
+    async findById(bookId){
         throw new Error('Method not implemented');
     }
 
