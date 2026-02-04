@@ -104,9 +104,14 @@ class BookRepository extends IBookRepository {
                 FETCH NEXT @pageSize ROWS ONLY;
             `;
 
-            const result = await this.db.query(query, {
-                searchTerm, searchPattern, categoryId, authorId, offset, pageSize
-            });
+            const request = this.db.request();
+            request.input('searchTerm', searchTerm);
+            request.input('searchPattern', searchPattern);
+            request.input('categoryId', categoryId);
+            request.input('authorId', authorId);
+            request.input('offset', offset);
+            request.input('pageSize', pageSize);
+            const result = await request.query(query);
 
             return result.recordset.map(row => new Book({
                 bookId: row.bookId,
@@ -243,7 +248,7 @@ class BookRepository extends IBookRepository {
                     SELECT 
                         YEAR(BorrowDate) as Year,
                         MONTH(BorrowDate) as Month,
-                        COUNT(*) AS Count
+                        COUNT(*) AS BorrowCount
                     FROM BorrowHistory
                     GROUP BY YEAR(BorrowDate), MONTH(BorrowDate)
                 ),
@@ -255,7 +260,7 @@ class BookRepository extends IBookRepository {
                         LAG(BorrowCount, 1, 0) OVER (ORDER BY Year, Month) as PreviousMonth,
                         BorrowCount - LAG(BorrowCount, 1, 0) OVER (ORDER BY Year, Month) as Change
                     FROM MonthlyBorrows            
-                )
+                ),
                 TopBooks AS (
                     SELECT TOP 10
                         b.BookID,
@@ -272,8 +277,14 @@ class BookRepository extends IBookRepository {
                 (SELECT * FROM TopBooks FOR JSON PATH) as TopBooks;
             `;
 
-            const result = await this.db.query(query);
-            return result.recordset[0];
+            const request = this.db.request();
+            const result = await request.query(query);
+
+            const row = result.recordset[0];
+            return {
+                BorrowTrends: row.BorrowTrends ? JSON.parse(row.BorrowTrends) : [],
+                TopBooks: row.TopBooks ? JSON.parse(row.TopBooks) : []
+            };
         } catch (error) {
             throw new Error(`Unable to retrieve Monthly Borrow Trends: ${error.message}`);
         }
@@ -315,8 +326,15 @@ class BookRepository extends IBookRepository {
                 FOR JSON PATH;
             `;
 
-            const result = await this.db.query(query);
-            return JSON.parse(result.recordset[0]['JSON_F52E2B61-18A1-11d1-B105-00805F49916B']);
+            const request = this.db.request();
+            const result = await request.query(query);
+
+            if (!result.recordset || result.recordset.length === 0) {
+                return [];
+            }
+
+            const jsonColumn = result.recordset[0]['JSON_F52E2B61-18A1-11d1-B105-00805F49916B'];
+            return jsonColumn ? JSON.parse(jsonColumn) : [];
 
         } catch (error) {
             throw new Error(`Failed to retrieve category hierarchy: ${error.message}`);
