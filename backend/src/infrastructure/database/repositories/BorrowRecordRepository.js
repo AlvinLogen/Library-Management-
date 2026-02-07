@@ -111,7 +111,44 @@ class BorrowRecordRepository extends IBorrowRecordRepository {
                 ORDER BY br.BorrowDate DESC;
             `;
 
-            const result = await this.db.query(query, { userId });
+            const request = this.db.request();
+            request.input('userId', userId);
+            const result = await request.query(query);
+
+            return result.recordset.map(row => new BorrowRecord({
+                borrowId: row.borrowId,
+                bookId: row.bookId,
+                userId: row.userId,
+                borrowDate: row.borrowDate,
+                dueDate: row.dueDate,
+                returnDate: row.returnDate,
+                status: row.status
+            }));
+
+        } catch (error) {
+            throw new Error(`Failed to find borrow records by user: ${error.message}`);
+        }
+    }
+
+    async findAllActive() {
+        try {
+            const query = `
+                SELECT
+                    br.BorrowID as borrowId,
+                    br.BookID as bookId,
+                    br.UserID as userId,
+                    br.BorrowDate as borrowDate,
+                    br.DueDate as dueDate,
+                    br.ReturnDate as returnDate,
+                    br.Status as status
+                FROM BorrowHistory br
+                WHERE br.Status = 'Borrowed'
+                    AND br.ReturnDate IS NULL
+                ORDER BY br.BorrowDate DESC;
+            `;
+
+            const request = this.db.request();
+            const result = await request.query(query);
 
             return result.recordset.map(row => new BorrowRecord({
                 borrowId: row.borrowId,
@@ -170,7 +207,7 @@ class BorrowRecordRepository extends IBorrowRecordRepository {
 
         try {
             // If borrowId exists, UPDATE; else INSERT
-            if(borrowRecord.borrowId){
+            if (borrowRecord.borrowId) {
                 const query = `
                     UPDATE BorrowHistory
                     SET
@@ -258,7 +295,8 @@ class BorrowRecordRepository extends IBorrowRecordRepository {
                 FROM BorrowHistory;
             `;
 
-            const result = await this.db.query(query);
+            const request = this.db.request();
+            const result = await request.query(query);
             return result.recordset[0];
 
         } catch (error) {

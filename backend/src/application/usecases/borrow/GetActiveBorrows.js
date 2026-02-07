@@ -11,17 +11,21 @@ class GetActiveBorrows {
         this.borrowRecordRepository = borrowRecordRepository;
     }
 
-    async execute(userId) {
+    async execute(userId = null) {
         // Precondition: Input validation
-        if (!userId || userId <= 0) {
-            throw new Error('Valid user ID is required');
+        if (userId !== null && userId <= 0) {
+            throw new Error('Valid user ID must be greater than 0');
         }
 
-        // Call repository method (Status = 'Borrowed' AND ReturnDate IS NULL)
-        const activeBorrows = await this.borrowRecordRepository.findActiveByUserId(userId);
+        if (userId) {
+            const activeBorrows = await this.borrowRecordRepository.findActiveByUserId(userId);
+            return activeBorrows;
+        } else {
+            // Get All Active Borrows
+            const activeBorrows = await this.borrowRecordRepository.findAllActive();
+            return activeBorrows;
+        }
 
-        // Postcondition: Return array of active BorrowRecord entities
-        return activeBorrows;
     }
 }
 

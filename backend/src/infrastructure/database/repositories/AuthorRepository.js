@@ -26,7 +26,9 @@ class AuthorRepository extends IAuthorRepository {
                 WHERE a.AuthorID = @authorId;
             `;
 
-            const result = await this.db.query(query, {authorId});
+            const request = await this.db.request();
+            request.input('authorId', authorId);
+            const result = await request.query(query);
 
             if(result.recordset.length === 0) return null;
 
