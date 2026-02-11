@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const { errorHandler } = require('./middleware/errorHandler');
 
 /**
  * Creates and configures Express application
@@ -61,20 +62,7 @@ function createApp(dependencies = {}){
     });
 
     // Error handling middlware (must be last)
-    app.use((err, req, res, next) => {
-        console.error('Error', err);
-
-        const statusCode = err.statusCode || 500;
-        const message = err.message || 'Internal Server Error';
-
-        res.status(statusCode).json({
-            error: {
-                message, 
-                statusCode, 
-                timestamp: new Date().toISOString()
-            }
-        })
-    });
+    app.use(errorHandler);
 
     return app;
 }

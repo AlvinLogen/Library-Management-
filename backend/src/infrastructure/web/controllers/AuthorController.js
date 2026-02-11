@@ -7,6 +7,9 @@
  * SOLID: Single Responsibility 
 */
 
+const { asyncHandler } = require('../middleware/errorHandler');
+const { ValidationError, NotFoundError } = require('../../../domain/errors/AppError');
+
 class AuthorController {
     constructor({
         getAuthorUseCase,
@@ -23,110 +26,79 @@ class AuthorController {
     /**
      * GET /api/authors/:id
      * Get author by ID
-    */
-    async getById(req, res, next) {
-        try {
-            // 1. Extract and validate HTTP request
-            const { id } = req.params;
-            const authorId = parseInt(id, 10);
+     */
+    getById = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const authorId = parseInt(id, 10);
 
-            if (isNaN(authorId)) {
-                return res.status(400).json({
-                    error: 'Invalid author ID'
-                });
-            }
-
-            // 2. Call use case / business logic
-            const author = await this.getAuthorUseCase.execute({ authorId });
-
-            // 3. handle use case / business logic result
-            if (!author) {
-                return res.status(404).json({
-                    error: 'Author not found'
-                });
-            }
-
-            // 4. Return HTTP response
-            res.json(author);
-
-        } catch (error) {
-            next(error);
+        if (isNaN(authorId)) {
+            throw new ValidationError('Invalid author ID', ['Author ID must be a valid number']);
         }
-    }
+
+        const author = await this.getAuthorUseCase.execute({ authorId });
+
+        if (!author) {
+            throw new NotFoundError('Author', authorId);
+        }
+
+        res.json(author);
+    });
 
     /**
      * POST /api/authors
      * Create a new author
-    */
-    async create(req, res, next) {
-        try {
-            const authorData = req.body;
+     */
+    create = asyncHandler(async (req, res) => {
+        const authorData = req.body;
+        const errors = [];
 
-            if(!authorData.firstName || !authorData.lastName){
-                return res.status(400).json({
-                    error: 'First name and last name are required'
-                });
-            }
+        if (!authorData.firstName) errors.push('First name is required');
+        if (!authorData.lastName) errors.push('Last name is required');
 
-            const author = await this.createAuthorUseCase.execute(authorData);
-            res.status(201).json(author);
-
-        } catch (error) {
-            next(error);
+        if (errors.length > 0) {
+            throw new ValidationError('Invalid author data', errors);
         }
-    }
+
+        const author = await this.createAuthorUseCase.execute(authorData);
+        res.status(201).json(author);
+    });
 
     /**
      * PUT /api/authors/:id
      * Update an author
-    */
-    async update(req, res, next) {
-        try {
-            const { id } = req.params;
-            const authorId = parseInt(id, 10);
-            const updateData = req.body;
+     */
+    update = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const authorId = parseInt(id, 10);
+        const updateData = req.body;
 
-            if(isNaN(authorId)){
-                return res.status(400).json({
-                    error: 'Invalid author ID'
-                });
-            }
-
-            const author = await this.updateAuthorUseCase.execute({
-                authorId,
-                ...updateData
-            });
-
-            res.json(author);
-
-        } catch (error) {
-            next(error);
+        if (isNaN(authorId)) {
+            throw new ValidationError('Invalid author ID', ['Author ID must be a valid number']);
         }
-    }
+
+        const author = await this.updateAuthorUseCase.execute({
+            authorId,
+            ...updateData
+        });
+
+        res.json(author);
+    });
 
     /**
      * DELETE /api/authors/:id
      * Delete an author
-    */
-    async delete(req, res, next) {
-        try {
-            const { id } = req.params;
-            const authorId = parseInt(id, 10);
+     */
+    delete = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const authorId = parseInt(id, 10);
 
-            if(isNaN(authorId)){
-                return res.status(400).json({
-                    error: 'Invalid author ID'
-                });
-            }
-
-            await this.deleteAuthorUseCase.execute({authorId});
-            res.status(204).send();
-
-        } catch (error) {
-            next(error);
+        if (isNaN(authorId)) {
+            throw new ValidationError('Invalid author ID', ['Author ID must be a valid number']);
         }
-    }
 
+        await this.deleteAuthorUseCase.execute({ authorId });
+        res.status(204).send();
+    });
 }
 
 module.exports = AuthorController;
